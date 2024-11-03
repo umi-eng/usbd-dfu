@@ -291,7 +291,10 @@ pub trait DfuMemory {
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     ///
-    fn store_write_buffer(&mut self, src: &[u8]) -> Result<(), ()>;
+    #[allow(unused_variables)]
+    fn store_write_buffer(&mut self, src: &[u8]) -> Result<(), ()> {
+        Err(())
+    }
 
     /// Read memory and return it to device.
     ///
@@ -303,7 +306,10 @@ pub trait DfuMemory {
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     ///
-    fn read(&mut self, address: u32, length: usize) -> Result<&[u8], DfuMemoryError>;
+    #[allow(unused_variables)]
+    fn read(&mut self, address: u32, length: usize) -> Result<&[u8], DfuMemoryError> {
+        Err(DfuMemoryError::Unknown)
+    }
 
     /// Trigger block program.
     ///
@@ -314,7 +320,10 @@ pub trait DfuMemory {
     // / This function by default is called from USB interrupt context, depending on
     // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn program(&mut self, address: u32, length: usize) -> Result<(), DfuMemoryError>;
+    #[allow(unused_variables)]
+    fn program(&mut self, address: u32, length: usize) -> Result<(), DfuMemoryError> {
+        Err(DfuMemoryError::Prog)
+    }
 
     /// Trigger page erase.
     ///
@@ -324,7 +333,10 @@ pub trait DfuMemory {
     // / This function by default is called from USB interrupt context, depending on
     // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn erase(&mut self, address: u32) -> Result<(), DfuMemoryError>;
+    #[allow(unused_variables)]
+    fn erase(&mut self, address: u32) -> Result<(), DfuMemoryError> {
+        Err(DfuMemoryError::Erase)
+    }
 
     /// Trigger full erase.
     ///
@@ -332,7 +344,10 @@ pub trait DfuMemory {
     // / This function by default is called from USB interrupt context, depending on
     // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn erase_all(&mut self) -> Result<(), DfuMemoryError>;
+    #[allow(unused_variables)]
+    fn erase_all(&mut self) -> Result<(), DfuMemoryError> {
+        Err(DfuMemoryError::Erase)
+    }
 
     /// Finish writing firmware to a persistent storage, and optionally activate it.
     ///
@@ -345,7 +360,9 @@ pub trait DfuMemory {
     // / This function by default is called from USB interrupt context, depending on
     // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn manifestation(&mut self) -> Result<(), DfuManifestationError>;
+    fn manifestation(&mut self) -> Result<(), DfuManifestationError> {
+        Err(DfuManifestationError::Unknown)
+    }
 
     /// Called every time when USB is reset.
     ///

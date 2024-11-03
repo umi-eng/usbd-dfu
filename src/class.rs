@@ -24,7 +24,7 @@ const HAS_READ_UNPROTECT: bool = false;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum DFUState {
+enum DfuState {
     /// Device is running its normal application.
     #[allow(dead_code)]
     AppIdle = 0,
@@ -53,9 +53,9 @@ enum DFUState {
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum DFUStatusCode {
+enum DfuStatusCode {
     /// No error condition is present.
-    OK = 0x00,
+    Ok = 0x00,
     /// File is not targeted for use by this device.
     ErrTarget = 0x01,
     /// File is for this device but fails some vendor-specific verification test.
@@ -89,7 +89,7 @@ enum DFUStatusCode {
 }
 
 #[repr(u8)]
-enum DnloadCommand {
+enum DownloadCommand {
     GetCommands = 0x00,
     SetAddressPointer = 0x21,
     Erase = 0x41,
@@ -100,53 +100,53 @@ enum DnloadCommand {
 /// (reading, erasing, writting). These will be translated
 /// to a corresponding error codes in DFU protocol.
 #[repr(u8)]
-pub enum DFUMemError {
+pub enum DfuMemoryError {
     /// File is not targeted for use by this device.
-    Target = DFUStatusCode::ErrTarget as u8,
+    Target = DfuStatusCode::ErrTarget as u8,
     /// File is for this device but fails some vendor-specific verification test.
-    File = DFUStatusCode::ErrFile as u8,
+    File = DfuStatusCode::ErrFile as u8,
     /// Device is unable to write memory.
-    Write = DFUStatusCode::ErrWrite as u8,
+    Write = DfuStatusCode::ErrWrite as u8,
     /// Memory erase function failed.
-    Erase = DFUStatusCode::ErrErase as u8,
+    Erase = DfuStatusCode::ErrErase as u8,
     /// Memory erase check failed.
-    CheckErased = DFUStatusCode::ErrCheckErased as u8,
+    CheckErased = DfuStatusCode::ErrCheckErased as u8,
     /// Program memory function failed.
-    Prog = DFUStatusCode::ErrProg as u8,
+    Prog = DfuStatusCode::ErrProg as u8,
     /// Programmed memory failed verification.
-    Verify = DFUStatusCode::ErrVerify as u8,
+    Verify = DfuStatusCode::ErrVerify as u8,
     /// Something went wrong, but the device does not know what it was.
-    Unknown = DFUStatusCode::ErrUnknown as u8,
+    Unknown = DfuStatusCode::ErrUnknown as u8,
     /// Cannot program memory due to received address that is out of range.
-    Address = DFUStatusCode::ErrAddress as u8,
+    Address = DfuStatusCode::ErrAddress as u8,
     /// A vendor-specific error. iString in DFU_GETSTATUS reply will always be 0.
-    ErrVendor = DFUStatusCode::ErrVendor as u8,
+    ErrVendor = DfuStatusCode::ErrVendor as u8,
 }
 
 /// Errors that may happen when device enter Manifestation phase
 #[repr(u8)]
-pub enum DFUManifestationError {
+pub enum DfuManifestationError {
     /// File is not targeted for use by this device.
-    Target = DFUStatusCode::ErrTarget as u8,
+    Target = DfuStatusCode::ErrTarget as u8,
     /// File is for this device but fails some vendor-specific verification test.
-    File = DFUStatusCode::ErrFile as u8,
+    File = DfuStatusCode::ErrFile as u8,
     /// Received DFU_DNLOAD with wLength = 0, but device does not think it has all of the data yet.
-    NotDone = DFUStatusCode::ErrNotdone as u8,
+    NotDone = DfuStatusCode::ErrNotdone as u8,
     /// Device’s firmware is corrupt. It cannot return to run-time (non-DFU) operations.
-    Firmware = DFUStatusCode::ErrFirmware as u8,
+    Firmware = DfuStatusCode::ErrFirmware as u8,
     /// A vendor-specific error. iString in DFU_GETSTATUS reply will always be 0.
-    ErrVendor = DFUStatusCode::ErrVendor as u8,
+    ErrVendor = DfuStatusCode::ErrVendor as u8,
     /// Something went wrong, but the device does not know what it was.
-    Unknown = DFUStatusCode::ErrUnknown as u8,
+    Unknown = DfuStatusCode::ErrUnknown as u8,
 }
 
-/// Trait that describes the abstraction used to access memory on a device. [`DFUClass`] will call corresponding
+/// Trait that describes the abstraction used to access memory on a device. [`DfuClass`] will call corresponding
 /// functions and will use provided constants to tailor DFU features and, for example time interval values that
 /// are used in the protocol.
 ///
 /// In this context we use "page" to mean the smallest region of flash memory which can be erased, and "block"
 /// to mean an amount of memory which is to be used for reading or programming.
-pub trait DFUMemIO {
+pub trait DfuMemory {
     /// Specifies the default value of Address Pointer
     ///
     /// Usually, it's start address of a memory region.
@@ -205,7 +205,7 @@ pub trait DFUMemIO {
 
     /// If set, DFU descriptor will have *bitManifestationTolerant* bit set. Default is `true`.
     ///
-    /// See also [`MANIFESTATION_TIME_MS`](DFUMemIO::MANIFESTATION_TIME_MS).
+    /// See also [`MANIFESTATION_TIME_MS`](DfuMemory::MANIFESTATION_TIME_MS).
     const MANIFESTATION_TOLERANT: bool = true;
 
     // /// Remove device's flash read protection. This operation should erase
@@ -215,7 +215,7 @@ pub trait DFUMemIO {
     /// Time in milliseconds host must wait before issuing the next command after
     /// block program request.
     ///
-    /// This is the time that program of one block or [`TRANSFER_SIZE`](DFUMemIO::TRANSFER_SIZE) bytes
+    /// This is the time that program of one block or [`TRANSFER_SIZE`](DfuMemory::TRANSFER_SIZE) bytes
     /// takes.
     ///
     /// DFU programs data as follows:
@@ -229,10 +229,10 @@ pub trait DFUMemIO {
     /// > 4. After waiting for a specified number of milliseconds, host continues to send new commands.
     const PROGRAM_TIME_MS: u32;
 
-    /// Similar to [`PROGRAM_TIME_MS`](DFUMemIO::PROGRAM_TIME_MS), but for a page erase operation.
+    /// Similar to [`PROGRAM_TIME_MS`](DfuMemory::PROGRAM_TIME_MS), but for a page erase operation.
     const ERASE_TIME_MS: u32;
 
-    /// Similar to [`PROGRAM_TIME_MS`](DFUMemIO::PROGRAM_TIME_MS), but for a full erase operation.
+    /// Similar to [`PROGRAM_TIME_MS`](DfuMemory::PROGRAM_TIME_MS), but for a full erase operation.
     const FULL_ERASE_TIME_MS: u32;
 
     /// Time in milliseconds host must wait after submitting the final firware download
@@ -242,10 +242,10 @@ pub trait DFUMemIO {
     /// the uploaded firmware.
     ///
     /// After the activation is completed, device may need to reset (if
-    /// [`MANIFESTATION_TOLERANT`](DFUMemIO::MANIFESTATION_TOLERANT) is `false`), or it can return to IDLE state
+    /// [`MANIFESTATION_TOLERANT`](DfuMemory::MANIFESTATION_TOLERANT) is `false`), or it can return to IDLE state
     /// (if `MANIFESTATION_TOLERANT` is `true`)
     ///
-    /// See also [`PROGRAM_TIME_MS`](DFUMemIO::PROGRAM_TIME_MS).
+    /// See also [`PROGRAM_TIME_MS`](DfuMemory::PROGRAM_TIME_MS).
     const MANIFESTATION_TIME_MS: u32 = 1;
 
     /// wDetachTimeOut field in DFU descriptor. Default value: `250` ms.
@@ -259,7 +259,7 @@ pub trait DFUMemIO {
 
     /// Expected transfer size. Default value: `128` bytes.
     ///
-    /// This is the maximum size of a block for [`read()`](DFUMemIO::read) and [`program()`](DFUMemIO::program) functions.
+    /// This is the maximum size of a block for [`read()`](DfuMemory::read) and [`program()`](DfuMemory::program) functions.
     ///
     /// This also sets `wTransferSize` in DFU Functional descriptor.
     ///
@@ -295,7 +295,7 @@ pub trait DFUMemIO {
 
     /// Read memory and return it to device.
     ///
-    /// If Upload operation is supported ([`HAS_UPLOAD`](DFUMemIO::HAS_UPLOAD) is `true`), this function
+    /// If Upload operation is supported ([`HAS_UPLOAD`](DfuMemory::HAS_UPLOAD) is `true`), this function
     /// returns memory contents to a host.
     ///
     /// Implementation must check that address is in a target region and that the
@@ -303,7 +303,7 @@ pub trait DFUMemIO {
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     ///
-    fn read(&mut self, address: u32, length: usize) -> Result<&[u8], DFUMemError>;
+    fn read(&mut self, address: u32, length: usize) -> Result<&[u8], DfuMemoryError>;
 
     /// Trigger block program.
     ///
@@ -312,9 +312,9 @@ pub trait DFUMemIO {
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     // / This function by default is called from USB interrupt context, depending on
-    // / [`MEMIO_IN_USB_INTERRUPT`](DFUMemIO::MEMIO_IN_USB_INTERRUPT) value.
+    // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn program(&mut self, address: u32, length: usize) -> Result<(), DFUMemError>;
+    fn program(&mut self, address: u32, length: usize) -> Result<(), DfuMemoryError>;
 
     /// Trigger page erase.
     ///
@@ -322,30 +322,30 @@ pub trait DFUMemIO {
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     // / This function by default is called from USB interrupt context, depending on
-    // / [`MEMIO_IN_USB_INTERRUPT`](DFUMemIO::MEMIO_IN_USB_INTERRUPT) value.
+    // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn erase(&mut self, address: u32) -> Result<(), DFUMemError>;
+    fn erase(&mut self, address: u32) -> Result<(), DfuMemoryError>;
 
     /// Trigger full erase.
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     // / This function by default is called from USB interrupt context, depending on
-    // / [`MEMIO_IN_USB_INTERRUPT`](DFUMemIO::MEMIO_IN_USB_INTERRUPT) value.
+    // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn erase_all(&mut self) -> Result<(), DFUMemError>;
+    fn erase_all(&mut self) -> Result<(), DfuMemoryError>;
 
     /// Finish writing firmware to a persistent storage, and optionally activate it.
     ///
-    /// This funciton should return if [`MANIFESTATION_TOLERANT`](DFUMemIO::MANIFESTATION_TOLERANT) is `true`.
+    /// This funciton should return if [`MANIFESTATION_TOLERANT`](DfuMemory::MANIFESTATION_TOLERANT) is `true`.
     ///
     /// This funciton should not return `Ok()` if `MANIFESTATION_TOLERANT` is `false`.
     /// Instead device should activate and start new main firmware.
     ///
     /// This function is called from `usb_dev.poll([])` (USB interrupt context).
     // / This function by default is called from USB interrupt context, depending on
-    // / [`MEMIO_IN_USB_INTERRUPT`](DFUMemIO::MEMIO_IN_USB_INTERRUPT) value.
+    // / [`MEMIO_IN_USB_INTERRUPT`](DfuMemory::MEMIO_IN_USB_INTERRUPT) value.
     ///
-    fn manifestation(&mut self) -> Result<(), DFUManifestationError>;
+    fn manifestation(&mut self) -> Result<(), DfuManifestationError>;
 
     /// Called every time when USB is reset.
     ///
@@ -364,38 +364,38 @@ pub trait DFUMemIO {
     fn usb_reset(&mut self) {}
 }
 
-impl From<DFUMemError> for DFUStatusCode {
-    fn from(e: DFUMemError) -> Self {
+impl From<DfuMemoryError> for DfuStatusCode {
+    fn from(e: DfuMemoryError) -> Self {
         match e {
-            DFUMemError::File => DFUStatusCode::ErrFile,
-            DFUMemError::Target => DFUStatusCode::ErrTarget,
-            DFUMemError::Address => DFUStatusCode::ErrAddress,
-            DFUMemError::CheckErased => DFUStatusCode::ErrCheckErased,
-            DFUMemError::Erase => DFUStatusCode::ErrErase,
-            DFUMemError::Write => DFUStatusCode::ErrWrite,
-            DFUMemError::Prog => DFUStatusCode::ErrProg,
-            DFUMemError::Verify => DFUStatusCode::ErrVerify,
-            DFUMemError::Unknown => DFUStatusCode::ErrUnknown,
-            DFUMemError::ErrVendor => DFUStatusCode::ErrVendor,
+            DfuMemoryError::File => DfuStatusCode::ErrFile,
+            DfuMemoryError::Target => DfuStatusCode::ErrTarget,
+            DfuMemoryError::Address => DfuStatusCode::ErrAddress,
+            DfuMemoryError::CheckErased => DfuStatusCode::ErrCheckErased,
+            DfuMemoryError::Erase => DfuStatusCode::ErrErase,
+            DfuMemoryError::Write => DfuStatusCode::ErrWrite,
+            DfuMemoryError::Prog => DfuStatusCode::ErrProg,
+            DfuMemoryError::Verify => DfuStatusCode::ErrVerify,
+            DfuMemoryError::Unknown => DfuStatusCode::ErrUnknown,
+            DfuMemoryError::ErrVendor => DfuStatusCode::ErrVendor,
         }
     }
 }
 
-impl From<DFUManifestationError> for DFUStatusCode {
-    fn from(e: DFUManifestationError) -> Self {
+impl From<DfuManifestationError> for DfuStatusCode {
+    fn from(e: DfuManifestationError) -> Self {
         match e {
-            DFUManifestationError::NotDone => DFUStatusCode::ErrNotdone,
-            DFUManifestationError::Firmware => DFUStatusCode::ErrFirmware,
-            DFUManifestationError::Unknown => DFUStatusCode::ErrUnknown,
-            DFUManifestationError::ErrVendor => DFUStatusCode::ErrVendor,
-            DFUManifestationError::File => DFUStatusCode::ErrFile,
-            DFUManifestationError::Target => DFUStatusCode::ErrTarget,
+            DfuManifestationError::NotDone => DfuStatusCode::ErrNotdone,
+            DfuManifestationError::Firmware => DfuStatusCode::ErrFirmware,
+            DfuManifestationError::Unknown => DfuStatusCode::ErrUnknown,
+            DfuManifestationError::ErrVendor => DfuStatusCode::ErrVendor,
+            DfuManifestationError::File => DfuStatusCode::ErrFile,
+            DfuManifestationError::Target => DfuStatusCode::ErrTarget,
         }
     }
 }
 
 /// DFU protocol USB class implementation for usb-device library.
-pub struct DFUClass<B: UsbBus, M: DFUMemIO> {
+pub struct DfuClass<B: UsbBus, M: DfuMemory> {
     if_num: InterfaceNumber,
     status: DFUStatus,
     interface_string: StringIndex,
@@ -411,14 +411,14 @@ enum Command {
     SetAddressPointer(u32),
     ReadUnprotect,
     WriteMemory { block_num: u16, len: u16 },
-    LeaveDFU,
+    LeaveDfu,
 }
 
 #[derive(Clone, Copy)]
 struct DFUStatus {
-    status: DFUStatusCode,
+    status: DfuStatusCode,
     poll_timeout: u32,
-    state: DFUState,
+    state: DfuState,
     address_pointer: u32,
     command: Command,
     pending: Command,
@@ -427,25 +427,25 @@ struct DFUStatus {
 impl DFUStatus {
     pub fn new(addr: u32) -> Self {
         Self {
-            status: DFUStatusCode::OK,
+            status: DfuStatusCode::Ok,
             poll_timeout: 0,
-            state: DFUState::DfuIdle,
+            state: DfuState::DfuIdle,
             address_pointer: addr,
             command: Command::None,
             pending: Command::None,
         }
     }
 
-    fn new_state_ok(&mut self, state: DFUState) {
-        self.new_state_status(state, DFUStatusCode::OK);
+    fn new_state_ok(&mut self, state: DfuState) {
+        self.new_state_status(state, DfuStatusCode::Ok);
     }
 
-    fn new_state_status(&mut self, state: DFUState, status: DFUStatusCode) {
+    fn new_state_status(&mut self, state: DfuState, status: DfuStatusCode) {
         self.status = status;
         self.state = state;
     }
 
-    fn state(&self) -> DFUState {
+    fn state(&self) -> DfuState {
         self.state
     }
 }
@@ -467,7 +467,7 @@ impl From<DFUStatus> for [u8; 6] {
     }
 }
 
-impl<B: UsbBus, M: DFUMemIO> UsbClass<B> for DFUClass<B, M> {
+impl<B: UsbBus, M: DfuMemory> UsbClass<B> for DfuClass<B, M> {
     fn get_configuration_descriptors(
         &self,
         writer: &mut DescriptorWriter,
@@ -508,8 +508,6 @@ impl<B: UsbBus, M: DFUMemIO> UsbClass<B> for DFUClass<B, M> {
                 0x01,
             ],
         )?;
-
-        //
 
         Ok(())
     }
@@ -593,20 +591,20 @@ impl<B: UsbBus, M: DFUMemIO> UsbClass<B> for DFUClass<B, M> {
         // Try to signal possible error to a host.
         // Not exactly clear what status should be.
         match self.status.state() {
-            DFUState::DfuUploadIdle
-            | DFUState::DfuDnloadIdle
-            | DFUState::DfuDnloadSync
-            | DFUState::DfuDnBusy
-            | DFUState::DfuError
-            | DFUState::DfuManifest
-            | DFUState::DfuManifestSync => {
+            DfuState::DfuUploadIdle
+            | DfuState::DfuDnloadIdle
+            | DfuState::DfuDnloadSync
+            | DfuState::DfuDnBusy
+            | DfuState::DfuError
+            | DfuState::DfuManifest
+            | DfuState::DfuManifestSync => {
                 self.status
-                    .new_state_status(DFUState::DfuError, DFUStatusCode::ErrUsbr);
+                    .new_state_status(DfuState::DfuError, DfuStatusCode::ErrUsbr);
             }
-            DFUState::DfuIdle
-            | DFUState::AppDetach
-            | DFUState::AppIdle
-            | DFUState::DfuManifestWaitReset => {}
+            DfuState::DfuIdle
+            | DfuState::AppDetach
+            | DfuState::AppIdle
+            | DfuState::DfuManifestWaitReset => {}
         }
     }
 
@@ -615,9 +613,9 @@ impl<B: UsbBus, M: DFUMemIO> UsbClass<B> for DFUClass<B, M> {
     }
 }
 
-impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
-    /// Creates a new DFUClass with the provided UsbBus and
-    /// DFUMemIO
+impl<B: UsbBus, M: DfuMemory> DfuClass<B, M> {
+    /// Creates a new [`DfuClass`] with the provided UsbBus and
+    /// [`DfuMemory`]
     pub fn new(alloc: &UsbBusAllocator<B>, mem: M) -> Self {
         Self {
             if_num: alloc.interface(),
@@ -629,25 +627,25 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
     }
 
     /// This function will consume self and return the owned memory
-    /// argument that was moved in the call to new()
+    /// argument that was moved in the call to [`DfuClass::new()`]
     pub fn release(self) -> M {
         self.mem
     }
 
-    /// This function may be called just after `DFUClass::new()` to
+    /// This function may be called just after [`DfuClass::new()`] to
     /// set DFU error state to "Device detected unexpected power on reset"
     /// instead of the usual `dfuIdle`.
     pub fn set_unexpected_reset_state(&mut self) {
         self.status
-            .new_state_status(DFUState::DfuError, DFUStatusCode::ErrPOR);
+            .new_state_status(DfuState::DfuError, DfuStatusCode::ErrPOR);
     }
 
-    /// This function may be called just after `DFUClass::new()` to
+    /// This function may be called just after [`DfuClass::new()`] to
     /// set DFU error state to "Device’s firmware is corrupt. It cannot return to run-time (non-DFU) operations"
     /// instead of the usual `dfuIdle`.
     pub fn set_firmware_corrupted_state(&mut self) {
         self.status
-            .new_state_status(DFUState::DfuError, DFUStatusCode::ErrFirmware);
+            .new_state_status(DfuState::DfuError, DfuStatusCode::ErrFirmware);
     }
 
     /// Return current Address Pointer value.
@@ -657,15 +655,15 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
 
     fn clear_status(&mut self, xfer: ControlOut<B>) {
         match self.status.state() {
-            DFUState::DfuError => {
+            DfuState::DfuError => {
                 self.status.command = Command::None;
                 self.status.pending = Command::None;
-                self.status.new_state_ok(DFUState::DfuIdle);
+                self.status.new_state_ok(DfuState::DfuIdle);
                 xfer.accept().ok();
             }
             _ => {
                 self.status
-                    .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+                    .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
                 xfer.reject().ok();
             }
         }
@@ -673,22 +671,22 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
 
     fn abort(&mut self, xfer: ControlOut<B>) {
         match self.status.state() {
-            DFUState::DfuIdle
-            | DFUState::DfuUploadIdle
-            | DFUState::DfuDnloadIdle
-            | DFUState::DfuDnloadSync
-            | DFUState::DfuManifestSync => {
+            DfuState::DfuIdle
+            | DfuState::DfuUploadIdle
+            | DfuState::DfuDnloadIdle
+            | DfuState::DfuDnloadSync
+            | DfuState::DfuManifestSync => {
                 self.status.command = Command::None;
                 self.status.pending = Command::None;
-                self.status.new_state_ok(DFUState::DfuIdle);
+                self.status.new_state_ok(DfuState::DfuIdle);
                 xfer.accept().ok();
             }
-            DFUState::AppDetach
-            | DFUState::AppIdle
-            | DFUState::DfuDnBusy
-            | DFUState::DfuManifest
-            | DFUState::DfuManifestWaitReset
-            | DFUState::DfuError => {
+            DfuState::AppDetach
+            | DfuState::AppIdle
+            | DfuState::DfuDnBusy
+            | DfuState::DfuManifest
+            | DfuState::DfuManifestWaitReset
+            | DfuState::DfuError => {
                 xfer.reject().ok();
             }
         }
@@ -697,16 +695,16 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
     fn download(&mut self, xfer: ControlOut<B>, req: Request) {
         let initial_state = self.status.state();
 
-        if initial_state != DFUState::DfuIdle && initial_state != DFUState::DfuDnloadIdle {
+        if initial_state != DfuState::DfuIdle && initial_state != DfuState::DfuDnloadIdle {
             self.status
-                .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+                .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
             xfer.reject().ok();
             return;
         }
 
         if req.length == 0 {
-            self.status.command = Command::LeaveDFU;
-            self.status.new_state_ok(DFUState::DfuManifestSync);
+            self.status.command = Command::LeaveDfu;
+            self.status.new_state_ok(DfuState::DfuManifestSync);
             xfer.accept().ok();
             return;
         }
@@ -718,7 +716,7 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
                 match self.mem.store_write_buffer(data) {
                     Err(_) => {
                         self.status
-                            .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+                            .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
                         xfer.reject().ok();
                     }
                     Ok(_) => {
@@ -727,7 +725,7 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
                             block_num,
                             len: data.len() as u16,
                         };
-                        self.status.new_state_ok(DFUState::DfuDnloadSync);
+                        self.status.new_state_ok(DfuState::DfuDnloadSync);
                         xfer.accept().ok();
                     }
                 }
@@ -738,36 +736,36 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
             if req.length >= 1 {
                 let command = data[0];
 
-                if command == DnloadCommand::SetAddressPointer as u8 {
+                if command == DownloadCommand::SetAddressPointer as u8 {
                     if req.length == 5 {
                         let addr = (data[1] as u32)
                             | ((data[2] as u32) << 8)
                             | ((data[3] as u32) << 16)
                             | ((data[4] as u32) << 24);
                         self.status.command = Command::SetAddressPointer(addr);
-                        self.status.new_state_ok(DFUState::DfuDnloadSync);
+                        self.status.new_state_ok(DfuState::DfuDnloadSync);
                         xfer.accept().ok();
                         return;
                     }
-                } else if command == DnloadCommand::Erase as u8 {
+                } else if command == DownloadCommand::Erase as u8 {
                     if req.length == 5 {
                         let addr = (data[1] as u32)
                             | ((data[2] as u32) << 8)
                             | ((data[3] as u32) << 16)
                             | ((data[4] as u32) << 24);
                         self.status.command = Command::Erase(addr);
-                        self.status.new_state_ok(DFUState::DfuDnloadSync);
+                        self.status.new_state_ok(DfuState::DfuDnloadSync);
                         xfer.accept().ok();
                         return;
                     } else if req.length == 1 {
                         self.status.command = Command::EraseAll;
-                        self.status.new_state_ok(DFUState::DfuDnloadSync);
+                        self.status.new_state_ok(DfuState::DfuDnloadSync);
                         xfer.accept().ok();
                         return;
                     }
-                } else if HAS_READ_UNPROTECT && command == DnloadCommand::ReadUnprotect as u8 {
+                } else if HAS_READ_UNPROTECT && command == DownloadCommand::ReadUnprotect as u8 {
                     self.status.command = Command::ReadUnprotect;
-                    self.status.new_state_ok(DFUState::DfuDnloadSync);
+                    self.status.new_state_ok(DfuState::DfuDnloadSync);
                     xfer.accept().ok();
                     return;
                 }
@@ -775,16 +773,16 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
         }
 
         self.status
-            .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+            .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
         xfer.reject().ok();
     }
 
     fn upload(&mut self, xfer: ControlIn<B>, req: Request) {
         let initial_state = self.status.state();
 
-        if initial_state != DFUState::DfuIdle && initial_state != DFUState::DfuUploadIdle {
+        if initial_state != DfuState::DfuIdle && initial_state != DfuState::DfuUploadIdle {
             self.status
-                .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+                .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
             xfer.reject().ok();
             return;
         }
@@ -792,14 +790,14 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
         if req.value == 0 {
             // Get command
             let commands = [
-                DnloadCommand::GetCommands as u8,
-                DnloadCommand::SetAddressPointer as u8,
-                DnloadCommand::Erase as u8,
+                DownloadCommand::GetCommands as u8,
+                DownloadCommand::SetAddressPointer as u8,
+                DownloadCommand::Erase as u8,
                 // XXX read unprotect
             ];
 
             if req.length as usize >= commands.len() {
-                self.status.new_state_ok(DFUState::DfuIdle);
+                self.status.new_state_ok(DfuState::DfuIdle);
                 xfer.accept_with(&commands).ok();
                 return;
             }
@@ -817,15 +815,15 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
                     Ok(b) => {
                         if b.len() < M::TRANSFER_SIZE as usize {
                             // short frame, back to idle
-                            self.status.new_state_ok(DFUState::DfuIdle);
+                            self.status.new_state_ok(DfuState::DfuIdle);
                         } else {
-                            self.status.new_state_ok(DFUState::DfuUploadIdle);
+                            self.status.new_state_ok(DfuState::DfuUploadIdle);
                         }
                         xfer.accept_with(b).ok();
                         return;
                     }
                     Err(e) => {
-                        self.status.new_state_status(DFUState::DfuError, e.into());
+                        self.status.new_state_status(DfuState::DfuError, e.into());
                         xfer.reject().ok();
                         return;
                     }
@@ -833,14 +831,14 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
             } else {
                 // overflow
                 self.status
-                    .new_state_status(DFUState::DfuError, DFUStatusCode::ErrAddress);
+                    .new_state_status(DfuState::DfuError, DfuStatusCode::ErrAddress);
                 xfer.reject().ok();
                 return;
             }
         }
 
         self.status
-            .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+            .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
         xfer.reject().ok();
     }
 
@@ -851,7 +849,7 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
             xfer.accept_with(&[v]).ok();
         } else {
             self.status
-                .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+                .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
             xfer.reject().ok();
         }
     }
@@ -865,7 +863,7 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
         }
 
         self.status
-            .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt);
+            .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt);
         xfer.reject().ok();
     }
 
@@ -877,7 +875,7 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
             } => M::PROGRAM_TIME_MS,
             Command::EraseAll => M::FULL_ERASE_TIME_MS,
             Command::Erase(_) => M::ERASE_TIME_MS,
-            Command::LeaveDFU => M::MANIFESTATION_TIME_MS,
+            Command::LeaveDfu => M::MANIFESTATION_TIME_MS,
             _ => 0,
         }
     }
@@ -912,33 +910,33 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
     fn update_impl(&mut self) {
         match self.status.pending {
             Command::EraseAll => match self.mem.erase_all() {
-                Err(e) => self.status.new_state_status(DFUState::DfuError, e.into()),
-                Ok(_) => self.status.new_state_ok(DFUState::DfuDnloadSync),
+                Err(e) => self.status.new_state_status(DfuState::DfuError, e.into()),
+                Ok(_) => self.status.new_state_ok(DfuState::DfuDnloadSync),
             },
             Command::Erase(b) => match self.mem.erase(b) {
-                Err(e) => self.status.new_state_status(DFUState::DfuError, e.into()),
-                Ok(_) => self.status.new_state_ok(DFUState::DfuDnloadSync),
+                Err(e) => self.status.new_state_status(DfuState::DfuError, e.into()),
+                Ok(_) => self.status.new_state_ok(DfuState::DfuDnloadSync),
             },
-            Command::LeaveDFU => {
+            Command::LeaveDfu => {
                 // may not return
                 let mr = self.mem.manifestation();
 
                 match mr {
-                    Err(e) => self.status.new_state_status(DFUState::DfuError, e.into()),
+                    Err(e) => self.status.new_state_status(DfuState::DfuError, e.into()),
                     Ok(_) => {
                         if M::MANIFESTATION_TOLERANT {
-                            self.status.new_state_ok(DFUState::DfuManifestSync)
+                            self.status.new_state_ok(DfuState::DfuManifestSync)
                         } else {
-                            self.status.new_state_ok(DFUState::DfuManifestWaitReset)
+                            self.status.new_state_ok(DfuState::DfuManifestWaitReset)
                         }
                     }
                 }
             }
             Command::ReadUnprotect => {
                 // XXX not implemented
-                // self.status.state = DFUState::DfuDnloadSync;
+                // self.status.state = DfuState::DfuDnloadSync;
                 self.status
-                    .new_state_status(DFUState::DfuError, DFUStatusCode::ErrStalledPkt)
+                    .new_state_status(DfuState::DfuError, DfuStatusCode::ErrStalledPkt)
             }
             Command::WriteMemory { block_num, len } => {
                 if let Some(pointer) = self
@@ -947,18 +945,18 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
                     .checked_add((block_num as u32) * (M::TRANSFER_SIZE as u32))
                 {
                     match self.mem.program(pointer, len as usize) {
-                        Err(e) => self.status.new_state_status(DFUState::DfuError, e.into()),
-                        Ok(_) => self.status.new_state_ok(DFUState::DfuDnloadSync),
+                        Err(e) => self.status.new_state_status(DfuState::DfuError, e.into()),
+                        Ok(_) => self.status.new_state_ok(DfuState::DfuDnloadSync),
                     }
                 } else {
                     // overflow
                     self.status
-                        .new_state_status(DFUState::DfuError, DFUStatusCode::ErrAddress);
+                        .new_state_status(DfuState::DfuError, DfuStatusCode::ErrAddress);
                 }
             }
             Command::SetAddressPointer(p) => {
                 self.status.address_pointer = p;
-                self.status.new_state_ok(DFUState::DfuDnloadSync)
+                self.status.new_state_ok(DfuState::DfuDnloadSync)
             }
             Command::None => {}
         }
@@ -967,7 +965,7 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
 
     fn process(&mut self) -> bool {
         let initial_state = self.status.state();
-        if initial_state == DFUState::DfuDnloadSync {
+        if initial_state == DfuState::DfuDnloadSync {
             match self.status.command {
                 Command::WriteMemory {
                     block_num: _,
@@ -979,30 +977,30 @@ impl<B: UsbBus, M: DFUMemIO> DFUClass<B, M> {
                 | Command::Erase(_) => {
                     self.status.pending = self.status.command;
                     self.status.command = Command::None;
-                    self.status.new_state_ok(DFUState::DfuDnBusy);
+                    self.status.new_state_ok(DfuState::DfuDnBusy);
                 }
                 //Command::None => {}
                 _ => {
-                    self.status.new_state_ok(DFUState::DfuDnloadIdle);
+                    self.status.new_state_ok(DfuState::DfuDnloadIdle);
                 }
             }
-        } else if initial_state == DFUState::DfuManifestSync {
+        } else if initial_state == DfuState::DfuManifestSync {
             match self.status.command {
                 Command::None => {
                     if M::MANIFESTATION_TOLERANT {
                         // Leave manifestation, back to Idle
                         self.status.command = Command::None;
-                        self.status.new_state_ok(DFUState::DfuIdle);
+                        self.status.new_state_ok(DfuState::DfuIdle);
                     }
                 }
                 _ => {
                     // Start manifestation
                     self.status.pending = self.status.command;
                     self.status.command = Command::None;
-                    self.status.new_state_ok(DFUState::DfuManifest);
+                    self.status.new_state_ok(DfuState::DfuManifest);
                 }
             }
-        } else if initial_state == DFUState::DfuDnBusy {
+        } else if initial_state == DfuState::DfuDnBusy {
             return false;
         }
 

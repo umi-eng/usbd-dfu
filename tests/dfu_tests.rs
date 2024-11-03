@@ -20,13 +20,17 @@ pub struct TestMem {
 
 struct TestMemOverride {
     read: Option<
-        fn(&mut TestMem, address: u32, length: usize) -> core::result::Result<&[u8], DFUMemError>,
+        fn(
+            &mut TestMem,
+            address: u32,
+            length: usize,
+        ) -> core::result::Result<&[u8], DfuMemoryError>,
     >,
-    erase: Option<fn(&mut TestMem, address: u32) -> Result<(), DFUMemError>>,
+    erase: Option<fn(&mut TestMem, address: u32) -> Result<(), DfuMemoryError>>,
     program: Option<
-        fn(&mut TestMem, address: u32, length: usize) -> core::result::Result<(), DFUMemError>,
+        fn(&mut TestMem, address: u32, length: usize) -> core::result::Result<(), DfuMemoryError>,
     >,
-    manifestation: Option<fn(&mut TestMem) -> Result<(), DFUManifestationError>>,
+    manifestation: Option<fn(&mut TestMem) -> Result<(), DfuManifestationError>>,
 }
 
 impl TestMem {
@@ -94,7 +98,7 @@ impl TestMem {
 
 const TESTMEM_BASE: u32 = 0x0200_0000;
 
-impl DFUMemIO for TestMem {
+impl DfuMemory for TestMem {
     const INITIAL_ADDRESS_POINTER: u32 = TESTMEM_BASE;
     const MANIFESTATION_TOLERANT: bool = false;
     const PROGRAM_TIME_MS: u32 = 50;
@@ -106,12 +110,12 @@ impl DFUMemIO for TestMem {
     const DETACH_TIMEOUT: u16 = 0x1122;
     const TRANSFER_SIZE: u16 = 128;
 
-    fn read(&mut self, address: u32, length: usize) -> core::result::Result<&[u8], DFUMemError> {
+    fn read(&mut self, address: u32, length: usize) -> core::result::Result<&[u8], DfuMemoryError> {
         if self.overrides.read.is_some() {
             return self.overrides.read.unwrap()(self, address, length);
         }
         if address < TESTMEM_BASE {
-            return Err(DFUMemError::Address);
+            return Err(DfuMemoryError::Address);
         }
 
         let from = (address - TESTMEM_BASE) as usize;
@@ -123,13 +127,13 @@ impl DFUMemIO for TestMem {
         Ok(&self.buffer[..min(length, len)])
     }
 
-    fn erase(&mut self, address: u32) -> core::result::Result<(), DFUMemError> {
+    fn erase(&mut self, address: u32) -> core::result::Result<(), DfuMemoryError> {
         if self.overrides.erase.is_some() {
             return self.overrides.erase.unwrap()(self, address);
         }
 
         if address < TESTMEM_BASE {
-            return Err(DFUMemError::Address);
+            return Err(DfuMemoryError::Address);
         }
 
         let from = address - TESTMEM_BASE;
@@ -139,14 +143,14 @@ impl DFUMemIO for TestMem {
             return Ok(());
         }
         if from >= TESTMEMSIZE as u32 {
-            return Err(DFUMemError::Address);
+            return Err(DfuMemoryError::Address);
         }
 
         self.erase(from as usize);
         Ok(())
     }
 
-    fn erase_all(&mut self) -> Result<(), DFUMemError> {
+    fn erase_all(&mut self) -> Result<(), DfuMemoryError> {
         for block in (0..TESTMEMSIZE).step_by(1024) {
             self.erase(block);
         }
@@ -158,33 +162,33 @@ impl DFUMemIO for TestMem {
         Ok(())
     }
 
-    fn program(&mut self, address: u32, length: usize) -> core::result::Result<(), DFUMemError> {
+    fn program(&mut self, address: u32, length: usize) -> core::result::Result<(), DfuMemoryError> {
         if self.overrides.program.is_some() {
             return self.overrides.program.unwrap()(self, address, length);
         }
 
         if address < TESTMEM_BASE {
-            return Err(DFUMemError::Address);
+            return Err(DfuMemoryError::Address);
         }
 
         let dst = (address - TESTMEM_BASE) as usize;
         if dst >= TESTMEMSIZE {
-            return Err(DFUMemError::Address);
+            return Err(DfuMemoryError::Address);
         }
 
         let len = self.write_from_buf(dst, length);
         if len != length {
-            return Err(DFUMemError::Prog);
+            return Err(DfuMemoryError::Prog);
         }
 
         if !self.verify_with_buf(dst, length) {
-            return Err(DFUMemError::Verify);
+            return Err(DfuMemoryError::Verify);
         }
 
         Ok(())
     }
 
-    fn manifestation(&mut self) -> Result<(), DFUManifestationError> {
+    fn manifestation(&mut self) -> Result<(), DfuManifestationError> {
         if self.overrides.manifestation.is_some() {
             return self.overrides.manifestation.unwrap()(self);
         }
@@ -196,14 +200,14 @@ impl DFUMemIO for TestMem {
 struct MkDFU {}
 
 impl UsbDeviceCtx for MkDFU {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
-        Ok(DFUClass::new(&alloc, TestMem::new(None)))
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
+        Ok(DfuClass::new(&alloc, TestMem::new(None)))
     }
 }
 
@@ -781,14 +785,14 @@ fn test_manifestation() {
 struct MkDFUMTret {}
 
 impl UsbDeviceCtx for MkDFUMTret {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
-        fn manifestation(tm: &mut TestMem) -> Result<(), DFUManifestationError> {
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
+        fn manifestation(tm: &mut TestMem) -> Result<(), DfuManifestationError> {
             Ok(())
         }
         let overrides = TestMemOverride {
@@ -797,7 +801,7 @@ impl UsbDeviceCtx for MkDFUMTret {
             program: None,
             manifestation: Some(manifestation),
         };
-        Ok(DFUClass::new(&alloc, TestMem::new(Some(overrides))))
+        Ok(DfuClass::new(&alloc, TestMem::new(Some(overrides))))
     }
 }
 
@@ -851,15 +855,15 @@ fn test_manifestation_no_reset() {
 struct MkDFUMTerr {}
 
 impl UsbDeviceCtx for MkDFUMTerr {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
-        fn manifestation(tm: &mut TestMem) -> Result<(), DFUManifestationError> {
-            Err(DFUManifestationError::NotDone)
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
+        fn manifestation(tm: &mut TestMem) -> Result<(), DfuManifestationError> {
+            Err(DfuManifestationError::NotDone)
         }
         let overrides = TestMemOverride {
             read: None,
@@ -867,7 +871,7 @@ impl UsbDeviceCtx for MkDFUMTerr {
             program: None,
             manifestation: Some(manifestation),
         };
-        Ok(DFUClass::new(&alloc, TestMem::new(Some(overrides))))
+        Ok(DfuClass::new(&alloc, TestMem::new(Some(overrides))))
     }
 }
 
@@ -912,15 +916,15 @@ fn test_manifestation_err_not_done() {
 struct MkDFUEraseErr {}
 
 impl UsbDeviceCtx for MkDFUEraseErr {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
-        fn erase(tm: &mut TestMem, address: u32) -> core::result::Result<(), DFUMemError> {
-            Err(DFUMemError::CheckErased)
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
+        fn erase(tm: &mut TestMem, address: u32) -> core::result::Result<(), DfuMemoryError> {
+            Err(DfuMemoryError::CheckErased)
         }
 
         let overrides = TestMemOverride {
@@ -929,7 +933,7 @@ impl UsbDeviceCtx for MkDFUEraseErr {
             program: None,
             manifestation: None,
         };
-        Ok(DFUClass::new(&alloc, TestMem::new(Some(overrides))))
+        Ok(DfuClass::new(&alloc, TestMem::new(Some(overrides))))
     }
 }
 
@@ -964,18 +968,18 @@ fn test_erase_err_verfail() {
 struct MkDFUProgErr {}
 
 impl UsbDeviceCtx for MkDFUProgErr {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
-        fn program(tm: &mut TestMem, address: u32, length: usize) -> Result<(), DFUMemError> {
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
+        fn program(tm: &mut TestMem, address: u32, length: usize) -> Result<(), DfuMemoryError> {
             if address > TestMem::INITIAL_ADDRESS_POINTER {
-                Err(DFUMemError::Write)
+                Err(DfuMemoryError::Write)
             } else {
-                Err(DFUMemError::Prog)
+                Err(DfuMemoryError::Prog)
             }
         }
 
@@ -985,7 +989,7 @@ impl UsbDeviceCtx for MkDFUProgErr {
             program: Some(program),
             manifestation: None,
         };
-        Ok(DFUClass::new(&alloc, TestMem::new(Some(overrides))))
+        Ok(DfuClass::new(&alloc, TestMem::new(Some(overrides))))
     }
 }
 
@@ -1037,22 +1041,22 @@ fn test_program_err_prog_write() {
 struct MkDFUReadErr {}
 
 impl UsbDeviceCtx for MkDFUReadErr {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
         fn read(
             tm: &mut TestMem,
             address: u32,
             length: usize,
-        ) -> core::result::Result<&[u8], DFUMemError> {
+        ) -> core::result::Result<&[u8], DfuMemoryError> {
             if address > TestMem::INITIAL_ADDRESS_POINTER {
-                Err(DFUMemError::ErrVendor)
+                Err(DfuMemoryError::ErrVendor)
             } else {
-                Err(DFUMemError::Address)
+                Err(DfuMemoryError::Address)
             }
         }
 
@@ -1062,7 +1066,7 @@ impl UsbDeviceCtx for MkDFUReadErr {
             program: None,
             manifestation: None,
         };
-        Ok(DFUClass::new(&alloc, TestMem::new(Some(overrides))))
+        Ok(DfuClass::new(&alloc, TestMem::new(Some(overrides))))
     }
 }
 

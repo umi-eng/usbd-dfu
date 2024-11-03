@@ -18,7 +18,7 @@ impl TestMem {
 
 const TESTMEM_BASE: u32 = 0x0200_0000;
 
-impl DFUMemIO for TestMem {
+impl DfuMemory for TestMem {
     const INITIAL_ADDRESS_POINTER: u32 = TESTMEM_BASE;
     const MANIFESTATION_TOLERANT: bool = true;
     const MANIFESTATION_TIME_MS: u32 = 0x123;
@@ -32,15 +32,15 @@ impl DFUMemIO for TestMem {
     const TRANSFER_SIZE: u16 = 128;
     // const MEMIO_IN_USB_INTERRUPT: bool = false;
 
-    fn read(&mut self, address: u32, length: usize) -> core::result::Result<&[u8], DFUMemError> {
-        Err(DFUMemError::Address)
+    fn read(&mut self, address: u32, length: usize) -> core::result::Result<&[u8], DfuMemoryError> {
+        Err(DfuMemoryError::Address)
     }
 
-    fn erase(&mut self, address: u32) -> core::result::Result<(), DFUMemError> {
+    fn erase(&mut self, address: u32) -> core::result::Result<(), DfuMemoryError> {
         Ok(())
     }
 
-    fn erase_all(&mut self) -> Result<(), DFUMemError> {
+    fn erase_all(&mut self) -> Result<(), DfuMemoryError> {
         Ok(())
     }
 
@@ -48,11 +48,11 @@ impl DFUMemIO for TestMem {
         Ok(())
     }
 
-    fn program(&mut self, address: u32, length: usize) -> core::result::Result<(), DFUMemError> {
-        Err(DFUMemError::Address)
+    fn program(&mut self, address: u32, length: usize) -> core::result::Result<(), DfuMemoryError> {
+        Err(DfuMemoryError::Address)
     }
 
-    fn manifestation(&mut self) -> Result<(), DFUManifestationError> {
+    fn manifestation(&mut self) -> Result<(), DfuManifestationError> {
         Ok(())
     }
 }
@@ -61,14 +61,14 @@ impl DFUMemIO for TestMem {
 struct MkDFU {}
 
 impl UsbDeviceCtx for MkDFU {
-    type C<'c> = DFUClass<EmulatedUsbBus, TestMem>;
+    type C<'c> = DfuClass<EmulatedUsbBus, TestMem>;
     const EP0_SIZE: u8 = 32;
 
     fn create_class<'a>(
         &mut self,
         alloc: &'a UsbBusAllocator<EmulatedUsbBus>,
-    ) -> AnyResult<DFUClass<EmulatedUsbBus, TestMem>> {
-        Ok(DFUClass::new(&alloc, TestMem::new()))
+    ) -> AnyResult<DfuClass<EmulatedUsbBus, TestMem>> {
+        Ok(DfuClass::new(&alloc, TestMem::new()))
     }
 }
 

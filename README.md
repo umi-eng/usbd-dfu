@@ -64,7 +64,7 @@ without any additional terms or conditions.
 
 ## Example
 
-The example below tries to focus on `DFUClass`, parts related to a target
+The example below tries to focus on `DfuClass`, parts related to a target
 controller initialization and configuration (USB, interrupts, GPIO, etc.)
 are not in the scope of the example.
 
@@ -86,7 +86,7 @@ struct MyMem {
     flash_memory: [u8; 1024],
 }
 
-impl DFUMemIO for MyMem {
+impl DfuMemory for MyMem {
     const MEM_INFO_STRING: &'static str = "@Flash/0x00000000/1*1Kg";
     const INITIAL_ADDRESS_POINTER: u32 = 0x0;
     const PROGRAM_TIME_MS: u32 = 8;
@@ -94,20 +94,20 @@ impl DFUMemIO for MyMem {
     const FULL_ERASE_TIME_MS: u32 = 50;
     const TRANSFER_SIZE: u16 = 64;
 
-    fn read(&mut self, address: u32, length: usize) -> Result<&[u8], DFUMemError> {
+    fn read(&mut self, address: u32, length: usize) -> Result<&[u8], DfuMemoryError> {
         // TODO: check address value
         let offset = address as usize;
         Ok(&self.flash_memory[offset..offset+length])
     }
 
-    fn erase(&mut self, address: u32) -> Result<(), DFUMemError> {
+    fn erase(&mut self, address: u32) -> Result<(), DfuMemoryError> {
         // TODO: check address value
         self.flash_memory.fill(0xff);
         // TODO: verify that block is erased successfully
         Ok(())
     }
 
-    fn erase_all(&mut self) -> Result<(), DFUMemError> {
+    fn erase_all(&mut self) -> Result<(), DfuMemoryError> {
         // There is only one block, erase it.
         self.erase(0)
     }
@@ -117,7 +117,7 @@ impl DFUMemIO for MyMem {
         Ok(())
     }
 
-    fn program(&mut self, address: u32, length: usize) -> Result<(), DFUMemError>{
+    fn program(&mut self, address: u32, length: usize) -> Result<(), DfuMemoryError>{
         // TODO: check address value
         let offset = address as usize;
 
@@ -128,7 +128,7 @@ impl DFUMemIO for MyMem {
         Ok(())
     }
 
-    fn manifestation(&mut self) -> Result<(), DFUManifestationError> {
+    fn manifestation(&mut self) -> Result<(), DfuManifestationError> {
         // Nothing to do to activate FW
         Ok(())
     }
@@ -143,8 +143,8 @@ let mut my_mem = MyMem {
 // let usb_bus_alloc = UsbBus::new(peripheral);
 // let usb_dev = UsbDeviceBuilder::new().build();
 
-// Create DFUClass
-let mut dfu = DFUClass::new(&usb_bus_alloc, my_mem);
+// Create DFU USB class
+let mut dfu = DfuClass::new(&usb_bus_alloc, my_mem);
 
 // usb_dev.poll() must be called periodically, usually from USB interrupt handlers.
 // When USB input/output is done, handlers in MyMem may be called.

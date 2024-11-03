@@ -14,7 +14,7 @@ and either runs main firmware, or enters "firmware update"
 mode.
 
 Protocol implementation tries to follows DFU 1.1a protocol as
-specified by AN3156 by STMicroelectronics and 
+specified by AN3156 by STMicroelectronics and
 USB Device Firmware Upgrade Specification, Revision 1.1.
 
 This library is a protocol implementation only, actual code
@@ -24,32 +24,32 @@ user.
 
 ### Supported operations
 
-* Read (device to host) - upload command
-* Write (host to device) - download command
-* Erase
-* Erase All
+- Read (device to host) - upload command
+- Write (host to device) - download command
+- Erase
+- Erase All
 
 ### Not supported operations
 
-* Read Unprotect - erase everything and remove read protection.
+- Read Unprotect - erase everything and remove read protection.
 
 ### Limitations
 
-* Maximum USB transfer size is limited to what `usb-device` supports
-for control enpoint transfers, which is `128` bytes by default.
+- Maximum USB transfer size is limited to what `usb-device` supports
+  for control enpoint transfers, which is `128` bytes by default.
 
-* iString field in `DFU_GETSTATUS` is always `0`. Vendor-specific string
-error descriptions are not supported.
+- iString field in `DFU_GETSTATUS` is always `0`. Vendor-specific string
+  error descriptions are not supported.
 
 ## DFU utilities
 
 There are many implementations of tools to flash USB device
 supporting DFU protocol, for example:
 
-* [dfu](https://crates.io/crates/dfu) and [dfu-flasher](https://crates.io/crates/dfu-flasher)
-* [dfu-programmer](https://dfu-programmer.github.io/)
-* [dfu-util](http://dfu-util.sourceforge.net/)
-* others
+- [dfu](https://crates.io/crates/dfu) and [dfu-flasher](https://crates.io/crates/dfu-flasher)
+- [dfu-programmer](https://dfu-programmer.github.io/)
+- [dfu-util](http://dfu-util.sourceforge.net/)
+- others
 
 ## License
 

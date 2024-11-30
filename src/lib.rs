@@ -178,6 +178,7 @@
 
 /// DFU protocol module
 pub mod class;
+pub mod suffix;
 
 #[doc(inline)]
 pub use crate::class::{DfuClass, DfuManifestationError, DfuMemory, DfuMemoryError};

@@ -22,8 +22,9 @@ const DESC_DESCTYPE_DFU: u8 = 0x21;
 
 const HAS_READ_UNPROTECT: bool = false;
 
-#[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[repr(u8)]
 enum DfuState {
     /// Device is running its normal application.
     #[allow(dead_code)]
@@ -51,8 +52,9 @@ enum DfuState {
     DfuError = 10,
 }
 
-#[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[repr(u8)]
 enum DfuStatusCode {
     /// No error condition is present.
     Ok = 0x00,
@@ -88,6 +90,7 @@ enum DfuStatusCode {
     ErrStalledPkt = 0x0F,
 }
 
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[repr(u8)]
 enum DownloadCommand {
     GetCommands = 0x00,
@@ -99,6 +102,7 @@ enum DownloadCommand {
 /// Errors that may happen when working with the memory
 /// (reading, erasing, writting). These will be translated
 /// to a corresponding error codes in DFU protocol.
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[repr(u8)]
 pub enum DfuMemoryError {
     /// File is not targeted for use by this device.
@@ -124,6 +128,7 @@ pub enum DfuMemoryError {
 }
 
 /// Errors that may happen when device enter Manifestation phase
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 #[repr(u8)]
 pub enum DfuManifestationError {
     /// File is not targeted for use by this device.
@@ -412,6 +417,7 @@ impl From<DfuManifestationError> for DfuStatusCode {
 }
 
 /// DFU protocol USB class implementation for usb-device library.
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct DfuClass<B: UsbBus, M: DfuMemory> {
     if_num: InterfaceNumber,
     status: DFUStatus,
@@ -421,6 +427,7 @@ pub struct DfuClass<B: UsbBus, M: DfuMemory> {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 enum Command {
     None,
     EraseAll,
@@ -432,6 +439,7 @@ enum Command {
 }
 
 #[derive(Clone, Copy)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 struct DFUStatus {
     status: DfuStatusCode,
     poll_timeout: u32,

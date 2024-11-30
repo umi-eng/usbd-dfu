@@ -17,3 +17,10 @@ version = "0.3.2"
 
 [dev-dependencies.usbd-class-tester]
 version = "0.3.0"
+
+[dependencies.defmt]
+version = "0.3.10"
+optional = true
+
+[features]
+defmt-03 = ["dep:defmt", "usb-device/defmt"]

@@ -21,8 +21,8 @@ pub struct Suffix {
     pub device: u16,
 }
 
-impl From<[u8; 16]> for Suffix {
-    fn from(bytes: [u8; 16]) -> Self {
+impl From<&[u8]> for Suffix {
+    fn from(bytes: &[u8]) -> Self {
         Self {
             crc: u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
             length: bytes[4],

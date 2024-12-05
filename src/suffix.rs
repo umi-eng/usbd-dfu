@@ -6,19 +6,19 @@
 #[repr(C)]
 pub struct Suffix {
     /// CRC checksum of the entire file, with the this CRC value set as zeroes.
-    crc: u32,
+    pub crc: u32,
     /// Length of this suffix.
-    length: u8,
+    pub length: u8,
     /// DFU signature field. Must be `U`, `F`, `D`, i.e. "DFU" in ASCII, in reverse.
-    dfu_signature: [u8; 3],
+    pub dfu_signature: [u8; 3],
     /// BCD DFU specification number.
-    dfu_specification: u16,
+    pub dfu_specification: u16,
     /// USB vendor identifier.
-    usb_vendor: u16,
+    pub usb_vendor: u16,
     /// USB product identifier.
-    usb_product: u16,
+    pub usb_product: u16,
     /// BCD firmware release or version number.
-    device: u16,
+    pub device: u16,
 }
 
 impl From<[u8; 16]> for Suffix {

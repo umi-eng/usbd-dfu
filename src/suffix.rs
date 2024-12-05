@@ -10,7 +10,7 @@ pub struct Suffix {
     /// Length of this suffix.
     pub length: u8,
     /// DFU signature field. Must be `U`, `F`, `D`, i.e. "DFU" in ASCII, in reverse.
-    pub dfu_signature: [u8; 3],
+    pub dfu_signature: [char; 3],
     /// BCD DFU specification number.
     pub dfu_specification: u16,
     /// USB vendor identifier.
@@ -26,7 +26,7 @@ impl From<[u8; 16]> for Suffix {
         Self {
             crc: u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
             length: bytes[4],
-            dfu_signature: [bytes[5], bytes[6], bytes[7]],
+            dfu_signature: [bytes[5] as char, bytes[6] as char, bytes[7] as char],
             dfu_specification: u16::from_le_bytes([bytes[8], bytes[9]]),
             usb_vendor: u16::from_le_bytes([bytes[10], bytes[11]]),
             usb_product: u16::from_le_bytes([bytes[12], bytes[13]]),
